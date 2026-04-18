@@ -1,3 +1,3 @@
-# ai_10012300017
+# AI Exam
 Name : José M. kombila 
 Index number :
