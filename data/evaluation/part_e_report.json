@@ -1,0 +1,61 @@
+{
+  "generated_at": 1776965374.6974351,
+  "items": [
+    {
+      "name": "adversarial_ambiguous",
+      "category": "ambiguous",
+      "query": "How did Mahama perform?",
+      "rag": {
+        "answer": "Election results (Ghana): 2004 | Central Region | George Aggudey (CPP): 9981 votes (1.42%) 2004 | Central Region | J. A. Mills (NDC): 277433 votes (39.60%) 2004 | Central Region | J. A. Kuffour (NPP): 414339 votes (59.14%) 2004 | Central Region | Edward Mahama (PNC): 5718 votes (0.82%) [csv:2004:Upper West Region:37] (score=0.7223) Election results (Ghana): 2004 | Upper West Region | George Aggudey (CPP): 3209 votes (1.52%) 2004 | Upper West Region | J. A. Mills (NDC): 119982 votes (56.67%) 2004 | Upper West Region | J. A. Kuffour (NPP): 68238 votes (32.23%) 2004 | Upper East Region | Edward Mahama (PNC",
+        "llm_error": null,
+        "hallucination_rate_est": 0.08,
+        "retrieved_ids": [
+          "csv:2004:Central Region:32",
+          "csv:2004:Upper West Region:37",
+          "csv:2004:Western Region:39",
+          "csv:2004:Upper East Region:36",
+          "csv:1996:Western Region:19",
+          "csv:1996:Brong Ahafo Region:11",
+          "csv:2004:Ashanti Region:30",
+          "csv:2004:Northern Region:35"
+        ]
+      },
+      "llm_only": {
+        "answer": "She was a good student.",
+        "llm_error": null,
+        "hallucination_rate_est": 0.0
+      },
+      "consistency": {
+        "rag_run1_equals_run2": true
+      }
+    },
+    {
+      "name": "adversarial_misleading",
+      "category": "misleading_or_incomplete",
+      "query": "What was the NPP vote in Volta Region in 2020?",
+      "rag": {
+        "answer": "406 votes (0.06%)",
+        "llm_error": null,
+        "hallucination_rate_est": 0.0,
+        "retrieved_ids": [
+          "csv:2020:Volta Region:95",
+          "csv:2016:Volta Region:79",
+          "csv:2000:Volta Region:28",
+          "csv:2012:Volta Region:63",
+          "csv:2008:Volta Region:48",
+          "csv:2004:Volta Region:38",
+          "csv:1996:Volta Region:18",
+          "csv:1992:Volta Region:8"
+        ]
+      },
+      "llm_only": {
+        "answer": "0",
+        "llm_error": null,
+        "hallucination_rate_est": 1.0
+      },
+      "consistency": {
+        "rag_run1_equals_run2": true
+      }
+    }
+  ]
+}
