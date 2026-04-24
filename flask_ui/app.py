@@ -27,6 +27,7 @@ app = Flask(
     __name__,
     template_folder=str(_FLASK_DIR / "templates"),
 )
+app.secret_key = "acity_rag_feedback_secret_key_2026"
 
 _store: tuple[Any, Any] | None = None
 
@@ -252,6 +253,10 @@ def home() -> str:
                         observation=""
                     )
 
+    # Get and clear feedback message from session
+    from flask import session
+    feedback_message = session.pop('feedback_message', None)
+    
     return render_template(
         "index.html",
         index_ready=index_ready,
@@ -264,6 +269,7 @@ def home() -> str:
         use_feedback=use_feedback,
         logs=_load_manual_logs(),
         query_history=_get_query_history(),
+        feedback_message=feedback_message,
     )
 
 
@@ -273,6 +279,9 @@ def feedback() -> Any:
     label = (request.form.get("label") or "").strip()
     if source_id and label in {"up", "down"}:
         append_feedback(source_id, label)
+        # Store success message in session for display
+        from flask import session
+        session['feedback_message'] = f"Feedback recorded: {label} for {source_id}"
     return redirect(url_for("home"))
 
 
@@ -338,6 +347,9 @@ def get_query_history_api() -> Any:
 def clear_all_data() -> Any:
     """API endpoint to clear all query history and experiment logs"""
     _clear_all_results()
+    # Clear feedback message from session when clearing all data
+    from flask import session
+    session.pop('feedback_message', None)
     return jsonify({"success": True, "message": "All data cleared successfully"})
 
 

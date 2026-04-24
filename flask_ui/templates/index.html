@@ -1857,6 +1857,9 @@
           {% if error %}
           <p class="warning">{{ error }}</p>
           {% endif %}
+          {% if feedback_message %}
+          <p class="success" style="background: #10b981; color: white; padding: 8px; border-radius: 4px; margin: 8px 0;">{{ feedback_message }}</p>
+          {% endif %}
         </article>
 
         <aside class="card manual-logs-container">
