@@ -119,4 +119,4 @@ The Flask UI **Manual experiment logs** panel appends JSON lines to `data/manual
 
 ## Documentation (Word-ready)
 
-Use `docs/PROJECT_DOCUMENTATION.md` as the source for your Word report (copy sections into `.docx` and add figures/screenshots).
+
