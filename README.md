@@ -122,9 +122,8 @@ Output file: `data/evaluation/part_e_report.json`
 
 The Flask UI **Manual experiment logs** panel appends JSON lines to `data/manual_experiment_logs.jsonl`. These are **only what you type**—the LLM never writes this file.
 
-## 🌐 Live Deployment
 
-**Streamlit Cloud Deployment:** https://ai10012300017-dx4i3ibxcentcenuyhaic3.streamlit.app/
+##  Deployed solutions(URL) link🌐 🔗:  https://ai10012300017-dx4i3ibxcentcenuyhaic3.streamlit.app/
 
 ### ⚠️ Deployment Challenges & Solutions
 
