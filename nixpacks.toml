@@ -4,8 +4,7 @@ nixPkgs = ["python311", "git"]
 [phases.build]
 cmds = [
   "pip install --no-cache-dir --upgrade pip",
-  "pip install --no-cache-dir -r requirements-railway.txt",
-  "python scripts/build_index.py"
+  "pip install --no-cache-dir -r requirements-minimal.txt"
 ]
 
 [start]

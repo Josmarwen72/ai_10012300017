@@ -1,0 +1,17 @@
+# Core Flask dependencies only
+flask>=2.3.0
+gunicorn>=21.0.0
+
+# Essential dependencies
+pandas>=1.5.0
+httpx>=0.24.0
+python-dotenv>=1.0.0
+pypdf>=3.0.0
+numpy>=1.24.0
+
+# Remove heavy ML dependencies to reduce image size:
+# - sentence-transformers (500MB+)
+# - torch (1GB+) 
+# - torchvision (500MB+)
+# - transformers (1GB+)
+# - faiss-cpu (200MB+)
