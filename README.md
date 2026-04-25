@@ -145,5 +145,4 @@ The Flask UI **Manual experiment logs** panel appends JSON lines to `data/manual
 **Performance:** Fast loading, reliable deployment, meets all coursework requirements.
 
 ## Documentation (Word and Pdf ready)
-
-
+The architecture is included on my documentation
