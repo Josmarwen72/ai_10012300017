@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["python311", "git"]
+
+[phases.build]
+cmds = [
+  "python -m venv /opt/venv",
+  ". /opt/venv/bin/activate",
+  "pip install --no-cache-dir --upgrade pip",
+  "pip install --no-cache-dir -r requirements-railway.txt",
+  "python scripts/build_index.py"
+]
+
+[start]
+cmd = ". /opt/venv/bin/activate && python app.py"
