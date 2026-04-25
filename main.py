@@ -1,4 +1,4 @@
-"""Academic City RAG Assistant - Original UI Design with Lightweight Dependencies"""
+"""Acity RAG - Exact Flask UI Recreation in Streamlit with Lightweight Dependencies"""
 
 import streamlit as st
 import pandas as pd
@@ -6,6 +6,7 @@ import json
 import time
 from pathlib import Path
 import sys
+from datetime import datetime
 
 # Add project root to path
 ROOT = Path(__file__).resolve().parent
@@ -13,13 +14,13 @@ sys.path.insert(0, str(ROOT))
 
 # Page configuration
 st.set_page_config(
-    page_title="Acity RAG",
+    page_title="Acity RAG AI CHAT ASSISTANT",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS - Original dark theme design
+# Exact Flask UI CSS - Dark Modern Theme
 st.markdown("""
 <style>
 :root {
@@ -75,6 +76,28 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.sidebar {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: linear-gradient(150deg, rgba(41, 50, 102, 0.9), rgba(20, 24, 54, 0.86));
+  box-shadow: 0 20px 80px rgba(7, 10, 30, 0.6);
+  padding: 20px;
+  margin-right: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.sidebar-title h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.sidebar-subtitle {
+  margin: 0 0 20px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .query-input {
   background: rgba(24, 29, 60, 0.78);
   border: 1px solid var(--border);
@@ -102,6 +125,9 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .btn:hover {
@@ -199,26 +225,164 @@ body {
   background: rgba(139, 92, 246, 0.2);
   border-color: var(--violet);
 }
+
+.log-entry {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  background: rgba(24, 29, 60, 0.78);
+}
+
+.status-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mode-badge {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--violet);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-item {
+  margin: 8px 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--violet);
+}
+
+.recent-query-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  background: rgba(24, 29, 60, 0.78);
+}
+
+.section-title {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 12px 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.dot.ok {
+  background: #10b981;
+}
+
+.dot.warn {
+  background: #f59e0b;
+}
+
+/* Hide default Streamlit elements */
+.stDeployButton {
+  display: none;
+}
+
+[data-testid="stSidebar"] {
+  background: transparent;
+  padding: 0;
+}
+
+[data-testid="stSidebar"] > div {
+  padding: 0;
+  background: transparent;
+}
+
+[data-testid="stSidebarNavItems"] {
+  display: none;
+}
+
+.main .block-container {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  max-width: none;
+}
+
+.stSelectbox > div > div {
+  background: rgba(24, 29, 60, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.stTextArea > div > div > textarea {
+  background: rgba(24, 29, 60, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+}
+
+.stButton > button {
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+}
+
+.stButton > button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
 </style>
 """, unsafe_allow_html=True)
+
+# Initialize session state
+if 'query_history' not in st.session_state:
+    st.session_state.query_history = []
+if 'experiment_logs' not in st.session_state:
+    st.session_state.experiment_logs = []
+if 'feedback_message' not in st.session_state:
+    st.session_state.feedback_message = None
+if 'current_result' not in st.session_state:
+    st.session_state.current_result = None
+if 'comparison' not in st.session_state:
+    st.session_state.comparison = None
 
 # Load election data
 @st.cache_data
 def load_data():
     try:
-        # Try to load the CSV file
         data_path = ROOT / "data" / "Ghana_Election_Result.csv"
         if data_path.exists():
-            # Skip the first 3 header lines
             df = pd.read_csv(data_path, skiprows=3)
             return df
         else:
-            # Create sample data if file doesn't exist
+            # Create sample data
             sample_data = {
-                'Candidate': ['Nana Akufo-Addo', 'John Mahama', 'Nana Akufo-Addo', 'John Mahama'],
-                'Party': ['NPP', 'NDC', 'NPP', 'NDC'],
                 'Year': [2020, 2020, 2016, 2016],
                 'New Region': ['Greater Accra', 'Greater Accra', 'Greater Accra', 'Greater Accra'],
+                'Candidate': ['Nana Akufo-Addo', 'John Mahama', 'Nana Akufo-Addo', 'John Mahama'],
+                'Party': ['NPP', 'NDC', 'NPP', 'NDC'],
                 'Votes(%)': [55.3, 44.7, 52.5, 47.5],
                 'Votes': [1234567, 987654, 1122334, 998877]
             }
@@ -271,194 +435,322 @@ def search_data(df, query):
             results.append({
                 'score': score,
                 'data': row.to_dict(),
-                'context': ' | '.join(context)
+                'context': ' | '.join(context),
+                'source_id': f"{row.get('Candidate', 'Unknown')}_{row.get('Year', 'Unknown')}",
+                'text_preview': f"{row.get('Candidate', 'Unknown')} from {row.get('Party', 'Unknown')} party in {row.get('New Region', 'Unknown')} ({row.get('Year', 'Unknown')}) - {row.get('Votes(%)', 'N/A')}% votes"
             })
     
     return sorted(results, key=lambda x: x['score'], reverse=True)[:5]
 
-def main():
-    # Header - Original design
-    st.markdown("""
-    <div class="main-header">
-        <div class="logo-text">
-            <p class="eyebrow">Academic City University</p>
-            <h1>Acity RAG</h1>
-            <p class="muted">Retrieval Augmented Generation Assistant</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+def add_query_history(query, mode):
+    """Add query to history"""
+    query_entry = {
+        'id': len(st.session_state.query_history) + 1,
+        'query': query,
+        'mode': mode,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    st.session_state.query_history.append(query_entry)
+    # Keep only last 20
+    if len(st.session_state.query_history) > 20:
+        st.session_state.query_history = st.session_state.query_history[-20:]
+    return query_entry['id']
 
+def add_experiment_log(query, mode, status, response="", observation=""):
+    """Add experiment log"""
+    log_entry = {
+        'id': len(st.session_state.experiment_logs) + 1,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'query': query,
+        'mode': mode,
+        'status': status,
+        'response': response,
+        'observation': observation,
+        'when': datetime.now().strftime("%Y-%m-%d %H:%M")
+    }
+    st.session_state.experiment_logs.append(log_entry)
+    return log_entry['id']
+
+def main():
     # Load data
     df = load_data()
-    
-    # Sidebar
-    with st.sidebar:
-        st.header("📊 System Status")
-        if not df.empty:
-            st.success(f"✅ Data loaded: {len(df)} records")
-            if 'Year' in df.columns:
-                years = sorted(df['Year'].unique())
-                st.info(f"Years: {years}")
-            if 'New Region' in df.columns:
-                regions = df['New Region'].nunique()
-                st.info(f"Regions: {regions}")
+    index_ready = not df.empty
+
+    # Custom layout with sidebar and main content
+    col_sidebar, col_main = st.columns([1, 3])
+
+    with col_sidebar:
+        # Sidebar - Exact Flask UI recreation
+        st.markdown("""
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h2>ACity RAG</h2>
+                    <p class="sidebar-subtitle">AI Assistant</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Navigation
+        st.markdown("""
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+        """, unsafe_allow_html=True)
+
+        nav_items = [
+            ("📊", "Dashboard", "dashboard"),
+            ("📝", "Query History", "query-history"),
+            ("🔬", "Manual Experiment Logs", "manual-logs"),
+            ("🔧", "System Pipeline", "pipeline")
+        ]
+
+        for icon, text, page in nav_items:
+            st.markdown(f"""
+            <li class="nav-item">
+                <a href="#{page}" class="nav-link active">
+                    <span class="nav-icon">{icon}</span>
+                    <span class="nav-text">{text}</span>
+                </a>
+            </li>
+            """, unsafe_allow_html=True)
+
+        st.markdown("""
+            </ul>
+        </nav>
+        """, unsafe_allow_html=True)
+
+        # Recent Queries
+        st.markdown('<h3 class="section-title">Recent Queries</h3>', unsafe_allow_html=True)
+        
+        if st.session_state.query_history:
+            for query_item in st.session_state.query_history[:5]:
+                st.markdown(f"""
+                <div class="recent-query-item">
+                    <div class="recent-query-text">{query_item['query'][:40]}...</div>
+                    <div class="recent-query-meta">
+                        <span class="recent-query-mode">{query_item['mode']}</span>
+                        <span class="recent-query-time">{query_item['timestamp']}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
         else:
-            st.error("❌ No data available")
-        
-        st.header("ℹ️ About")
-        st.write("""
-        **Academic City RAG Assistant**
-        
-        Query Ghana presidential election results by:
-        - Candidate names
-        - Political parties (NPP, NDC)
-        - Regions
-        - Years
-        
-        Data source: Ghana Election Results
-        """)
+            st.markdown('<p class="muted">No recent queries</p>', unsafe_allow_html=True)
 
-    # Main query interface - Original design
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<p class="eyebrow">Query</p>', unsafe_allow_html=True)
-    
-    # Query input
-    query = st.text_area(
-        "Ask a question about Ghana elections or budget:",
-        height=100,
-        placeholder="e.g., What was the NDC percentage in Greater Accra in 2020?"
-    )
-    
-    # Mode selection
-    col1, col2 = st.columns(2)
-    with col1:
-        mode = st.selectbox(
-            "Retrieval Mode",
-            ["rag_hybrid", "rag_dense", "llm_only"],
-            help="rag_hybrid = Dense + BM25, rag_dense = Dense only, llm_only = No retrieval"
-        )
-    with col2:
-        profile = st.selectbox(
-            "Prompt Profile",
-            ["strict", "concise", "verbose"],
-            help="strict = Only use context, concise = Short answers, verbose = Detailed explanations"
-        )
-    
-    # Feedback toggle
-    use_feedback = st.checkbox("Use feedback")
-    
-    # Buttons
-    col_submit, col_compare = st.columns(2)
-    with col_submit:
-        if st.button("🚀 Run", type="primary"):
-            if query.strip():
-                if not df.empty:
-                    with st.spinner("Searching..."):
-                        results = search_data(df, query.strip())
-                        
-                        if results:
-                            st.markdown('</div>', unsafe_allow_html=True)
-                            st.markdown('<div class="card">', unsafe_allow_html=True)
-                            st.markdown('<p class="eyebrow">Results</p>', unsafe_allow_html=True)
-                            
-                            # Answer section
-                            st.markdown('<div class="answer">', unsafe_allow_html=True)
-                            answer = f"Based on the Ghana election data, here's what I found about '{query.strip()}':\n\n"
-                            for i, result in enumerate(results[:3], 1):
-                                data = result['data']
-                                answer += f"{i}. {data.get('Candidate', 'Unknown')} from {data.get('Party', 'Unknown')} party\n"
-                                if pd.notna(data.get('New Region')):
-                                    answer += f"   - Region: {data['New Region']}\n"
-                                if pd.notna(data.get('Year')):
-                                    answer += f"   - Year: {data['Year']}\n"
-                                if pd.notna(data.get('Votes(%)')):
-                                    answer += f"   - Vote Percentage: {data['Votes(%)']}%\n"
-                                answer += "\n"
-                            st.write(answer)
-                            st.markdown('</div>', unsafe_allow_html=True)
-                            
-                            # Retrieved chunks
-                            st.markdown('<p class="eyebrow">Retrieved chunks</p>', unsafe_allow_html=True)
-                            
-                            for i, result in enumerate(results, 1):
-                                data = result['data']
-                                st.markdown(f'<div class="chunk-card">', unsafe_allow_html=True)
-                                
-                                col1, col2 = st.columns([3, 1])
-                                with col1:
-                                    st.write(f"**{data.get('Candidate', 'Unknown')}**")
-                                    st.write(f"Party: {data.get('Party', 'Unknown')}")
-                                    st.write(f"Region: {data.get('New Region', 'Unknown')}")
-                                    st.write(f"Year: {data.get('Year', 'Unknown')}")
-                                
-                                with col2:
-                                    st.write(f"d={result['score']:.3f}")
-                                    st.write(f"b={result['score']*0.8:.3f}")
-                                    st.write(f"h={result['score']*0.9:.3f}")
-                                
-                                # Feedback buttons
-                                col_up, col_down = st.columns(2)
-                                with col_up:
-                                    if st.button(f"👍 {data.get('Candidate', 'Unknown')}", key=f"up_{i}"):
-                                        st.session_state.feedback_message = f"Feedback recorded: up for {data.get('Candidate', 'Unknown')}"
-                                with col_down:
-                                    if st.button(f"👎 {data.get('Candidate', 'Unknown')}", key=f"down_{i}"):
-                                        st.session_state.feedback_message = f"Feedback recorded: down for {data.get('Candidate', 'Unknown')}"
-                                
-                                st.markdown('</div>', unsafe_allow_html=True)
-                            
-                            # Show feedback message
-                            if 'feedback_message' in st.session_state:
-                                st.markdown(f'<div class="success-message">{st.session_state.feedback_message}</div>', unsafe_allow_html=True)
-                                del st.session_state.feedback_message
-                            
+    with col_main:
+        # Main Header - Exact Flask UI recreation
+        st.markdown("""
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">
+                        <div class="logo-text">
+                            <h1>Acity RAG AI CHAT ASSISTANT</h1>
+                            <p class="eyebrow">Academic City • RAG System</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-info">
+                    <p class="sub">Coursework-compliant simple UI using Streamlit.</p>
+                    <div class="status">
+        """, unsafe_allow_html=True)
+
+        if index_ready:
+            st.markdown('<span class="dot ok"></span>ready', unsafe_allow_html=True)
+        else:
+            st.markdown('<span class="dot warn"></span>not built', unsafe_allow_html=True)
+
+        st.markdown("""
+                    </div>
+                </div>
+            </div>
+        </header>
+        """, unsafe_allow_html=True)
+
+        # Main Grid Layout
+        col_query, col_logs = st.columns([2, 1])
+
+        with col_query:
+            # Query Section - Exact Flask UI recreation
+            st.markdown("""
+            <div class="card">
+                <h2>Query</h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Query Form
+            query = st.text_area(
+                "Query",
+                value=st.session_state.get('current_query', ''),
+                height=100,
+                placeholder="Ask a question about Ghana elections or budget...",
+                label_visibility="collapsed"
+            )
+
+            # Mode and Profile Selection
+            col_mode, col_profile = st.columns(2)
+            with col_mode:
+                mode = st.selectbox(
+                    "Mode",
+                    ["rag_hybrid", "rag_dense", "llm_only"],
+                    index=0,
+                    format_func=lambda x: {"rag_hybrid": "RAG hybrid", "rag_dense": "RAG dense", "llm_only": "LLM only"}[x],
+                    label_visibility="visible"
+                )
+            with col_profile:
+                profile = st.selectbox(
+                    "Prompt profile",
+                    ["strict", "concise", "verbose"],
+                    index=1,
+                    label_visibility="visible"
+                )
+
+            # Feedback checkbox
+            use_feedback = st.checkbox("Use feedback", value=True)
+
+            # Buttons
+            col_run, col_compare = st.columns(2)
+            with col_run:
+                if st.button("🚀 Run", type="primary", use_container_width=True):
+                    if query.strip():
+                        if not index_ready:
+                            st.error("Index not built. Data not available.")
                         else:
-                            st.markdown('</div>', unsafe_allow_html=True)
-                            st.markdown('<div class="warning">', unsafe_allow_html=True)
-                            st.write(f"No results found for '{query.strip()}'. Try different keywords.")
-                            st.info("Try searching for: NPP, NDC, candidate names, regions, or years.")
-                            st.markdown('</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    st.markdown('<div class="warning">', unsafe_allow_html=True)
-                    st.error("No data available to search.")
-                    st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                st.warning("Please enter a query.")
-    
-    with col_compare:
-        if st.button("🆚 Compare RAG vs LLM"):
-            if query.strip():
-                st.info("Comparison feature would show RAG vs pure LLM responses")
-            else:
-                st.warning("Please enter a query first.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+                            with st.spinner("Processing..."):
+                                results = search_data(df, query.strip())
+                                
+                                if results:
+                                    # Generate answer
+                                    answer = f"Based on the Ghana election data, here's what I found about '{query.strip()}':\n\n"
+                                    for i, result in enumerate(results[:3], 1):
+                                        data = result['data']
+                                        answer += f"{i}. {data.get('Candidate', 'Unknown')} from {data.get('Party', 'Unknown')} party\n"
+                                        if pd.notna(data.get('New Region')):
+                                            answer += f"   - Region: {data['New Region']}\n"
+                                        if pd.notna(data.get('Year')):
+                                            answer += f"   - Year: {data['Year']}\n"
+                                        if pd.notna(data.get('Votes(%)')):
+                                            answer += f"   - Vote Percentage: {data['Votes(%)']}%\n"
+                                        answer += "\n"
+                                    
+                                    st.session_state.current_result = {
+                                        'answer': answer,
+                                        'retrieved': results
+                                    }
+                                    
+                                    # Add to history
+                                    add_query_history(query.strip(), mode)
+                                    
+                                    # Add experiment log
+                                    status = "Success"
+                                    add_experiment_log(
+                                        query=query.strip(),
+                                        mode=mode,
+                                        status=status,
+                                        response=answer,
+                                        observation=""
+                                    )
+                                else:
+                                    st.warning(f"No results found for '{query.strip()}'. Try different keywords.")
+                    else:
+                        st.warning("Please enter a query.")
 
-    # Manual experiment logs
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<p class="eyebrow">Manual Experiment Logs</p>', unsafe_allow_html=True)
-    
-    with st.expander("Add Log Entry"):
-        log_entry = st.text_area("Log Entry", height=100)
-        if st.button("Add Log"):
-            if log_entry.strip():
-                # Simple log storage (would normally save to file)
-                if 'logs' not in st.session_state:
-                    st.session_state.logs = []
-                st.session_state.logs.append({
-                    'ts': time.time(),
-                    'entry': log_entry.strip()
-                })
-                st.success("Log entry added!")
-    
-    # Show existing logs
-    if 'logs' in st.session_state and st.session_state.logs:
-        st.write("Recent logs:")
-        for log in reversed(st.session_state.logs[-5:]):
-            st.write(f"• {log['entry']}")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+            with col_compare:
+                if st.button("🆚 Compare RAG vs LLM", use_container_width=True):
+                    if query.strip():
+                        st.info("Comparison feature would show RAG vs pure LLM responses")
+                    else:
+                        st.warning("Please enter a query first.")
+
+            # Show feedback message
+            if st.session_state.feedback_message:
+                st.markdown(f'<div class="success-message">{st.session_state.feedback_message}</div>', unsafe_allow_html=True)
+                st.session_state.feedback_message = None
+
+            # Show current result
+            if st.session_state.current_result:
+                result = st.session_state.current_result
+                
+                # Answer section
+                st.markdown('<h3>Answer</h3>', unsafe_allow_html=True)
+                st.markdown(f'<div class="answer">{result["answer"]}</div>', unsafe_allow_html=True)
+                
+                # Retrieved chunks
+                st.markdown('<h3>Retrieved chunks</h3>', unsafe_allow_html=True)
+                
+                for i, chunk in enumerate(result['retrieved'], 1):
+                    st.markdown(f'<div class="chunk-card">', unsafe_allow_html=True)
+                    
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**{chunk['source_id']}**")
+                        st.write(chunk['text_preview'])
+                    
+                    with col2:
+                        st.write(f"d={chunk['score']:.3f}")
+                        st.write(f"b={chunk['score']*0.8:.3f}")
+                        st.write(f"h={chunk['score']*0.9:.3f}")
+                    
+                    # Feedback buttons
+                    col_up, col_down = st.columns(2)
+                    with col_up:
+                        if st.button(f"👍", key=f"up_{i}"):
+                            st.session_state.feedback_message = f"Feedback recorded: up for {chunk['source_id']}"
+                    with col_down:
+                        if st.button(f"👎", key=f"down_{i}"):
+                            st.session_state.feedback_message = f"Feedback recorded: down for {chunk['source_id']}"
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+        with col_logs:
+            # Manual Experiment Logs - Exact Flask UI recreation
+            st.markdown("""
+            <div class="card manual-logs-container">
+                <div class="manual-logs-header">
+                    <div class="manual-logs-title">
+                        <h3>Manual Experiment Logs</h3>
+                        <p class="muted">Track and review your manual experiment observations.</p>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # New Log Entry
+            with st.expander("New Log Entry"):
+                log_query = st.text_area("Query/Observation", height=80)
+                log_mode = st.selectbox("Mode", ["rag_hybrid", "rag_dense", "llm_only"])
+                log_status = st.selectbox("Status", ["Success", "Partial", "Failed"])
+                log_observation = st.text_area("Manual Observation", height=100)
+                
+                if st.button("Save Log Entry"):
+                    if log_query.strip():
+                        add_experiment_log(
+                            query=log_query.strip(),
+                            mode=log_mode,
+                            status=log_status,
+                            observation=log_observation.strip()
+                        )
+                        st.success("Log entry added!")
+                        st.rerun()
+
+            # Display logs
+            if st.session_state.experiment_logs:
+                for log in reversed(st.session_state.experiment_logs[-10:]):
+                    st.markdown(f"""
+                    <div class="log-entry">
+                        <div class="log-meta">
+                            <span class="log-id">#{log['id']}</span>
+                            <span class="log-timestamp">{log['timestamp']}</span>
+                            <span class="status-badge status-{log['status'].lower()}">{log['status']}</span>
+                        </div>
+                        <div class="log-query">{log['query'][:80]}...</div>
+                        <div class="log-details">
+                            <span class="mode-badge">{log['mode']}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.markdown('<p class="muted">No experiment logs yet.</p>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
