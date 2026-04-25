@@ -301,6 +301,8 @@ if 'feedback_message' not in st.session_state:
     st.session_state.feedback_message = None
 if 'current_result' not in st.session_state:
     st.session_state.current_result = None
+if 'comparison_result' not in st.session_state:
+    st.session_state.comparison_result = None
 
 # Load election data
 @st.cache_data
@@ -539,7 +541,62 @@ def show_dashboard(df, index_ready):
     with col_compare:
         if st.button("🆚 Compare RAG vs LLM", use_container_width=True):
             if query.strip():
-                st.info("Comparison feature would show RAG vs pure LLM responses")
+                if not index_ready:
+                    st.error("Index not built. Data not available for comparison.")
+                else:
+                    with st.spinner("Running RAG vs LLM comparison..."):
+                        try:
+                            # Import pipeline components
+                            from backend.pipeline import load_store_and_bm25, run_pipeline
+                            
+                            # Load the RAG components
+                            store, bm25 = load_store_and_bm25()
+                            
+                            # Run RAG query
+                            rag_result = run_pipeline(
+                                query=query.strip(),
+                                store=store,
+                                bm25=bm25,
+                                mode="rag_hybrid",
+                                prompt_profile=profile,
+                                use_feedback=use_feedback
+                            )
+                            
+                            # Run LLM-only query
+                            llm_result = run_pipeline(
+                                query=query.strip(),
+                                store=store,
+                                bm25=bm25,
+                                mode="llm_only",
+                                prompt_profile=profile,
+                                use_feedback=False
+                            )
+                            
+                            # Store comparison results
+                            st.session_state.comparison_result = {
+                                'query': query.strip(),
+                                'rag_response': rag_result,
+                                'llm_response': llm_result,
+                                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            }
+                            
+                            # Add to history
+                            add_query_history(query.strip(), "comparison")
+                            
+                            # Add experiment log
+                            add_experiment_log(
+                                query=query.strip(),
+                                mode="comparison",
+                                status="Success",
+                                response=f"RAG: {rag_result.get('answer', '')[:100]}... | LLM: {llm_result.get('answer', '')[:100]}...",
+                                observation="RAG vs LLM comparison completed"
+                            )
+                            
+                            st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"Error during comparison: {str(e)}")
+                            st.warning("Make sure the vector store and BM25 index are properly built.")
             else:
                 st.warning("Please enter a query first.")
 
@@ -584,6 +641,102 @@ def show_dashboard(df, index_ready):
                     st.rerun()
             
             st.markdown('</div>', unsafe_allow_html=True)
+
+    # Show comparison result
+    if 'comparison_result' in st.session_state and st.session_state.comparison_result:
+        comp = st.session_state.comparison_result
+        
+        st.markdown('<h3>🆚 RAG vs LLM Comparison</h3>', unsafe_allow_html=True)
+        
+        # Comparison metadata
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.write(f"**Query:** {comp['query']}")
+        with col2:
+            st.write(f"**Timestamp:** {comp['timestamp']}")
+        with col3:
+            st.write(f"**Profile:** {profile}")
+        
+        # Side-by-side comparison
+        col_rag, col_llm = st.columns(2)
+        
+        with col_rag:
+            st.markdown("""
+            <div class="card">
+                <h4>🔍 RAG Response</h4>
+                <p class="muted">Retrieval-Augmented Generation with document context</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            rag_answer = comp['rag_response'].get('answer', 'No response generated')
+            st.markdown(f'<div class="answer">{rag_answer}</div>', unsafe_allow_html=True)
+            
+            # Show retrieved chunks for RAG
+            if comp['rag_response'].get('retrieved'):
+                st.markdown('<h5>Retrieved Context:</h5>', unsafe_allow_html=True)
+                for i, chunk in enumerate(comp['rag_response']['retrieved'][:3], 1):
+                    st.markdown(f'''
+                    <div class="chunk-card">
+                        <strong>{chunk['source_id']}</strong> (score: {chunk.get('hybrid_score', chunk.get('dense_score', 0)):.3f})
+                        <br><small>{chunk['text_preview']}</small>
+                    </div>
+                    ''', unsafe_allow_html=True)
+            
+            # Performance metrics
+            rag_stages = comp['rag_response'].get('stages', [])
+            rag_time = sum(stage.get('ms', 0) for stage in rag_stages)
+            st.write(f"⏱️ **Response Time:** {rag_time:.0f}ms")
+            st.write(f"📊 **Retrieved Chunks:** {len(comp['rag_response'].get('retrieved', []))}")
+        
+        with col_llm:
+            st.markdown("""
+            <div class="card">
+                <h4>🤖 LLM Only Response</h4>
+                <p class="muted">Pure language model response without document context</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            llm_answer = comp['llm_response'].get('answer', 'No response generated')
+            st.markdown(f'<div class="answer">{llm_answer}</div>', unsafe_allow_html=True)
+            
+            # Performance metrics
+            llm_stages = comp['llm_response'].get('stages', [])
+            llm_time = sum(stage.get('ms', 0) for stage in llm_stages)
+            st.write(f"⏱️ **Response Time:** {llm_time:.0f}ms")
+            st.write(f"📄 **Context Used:** None (LLM only)")
+        
+        # Comparison summary
+        st.markdown("""
+        <div class="card">
+            <h4>📊 Comparison Summary</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col_time, col_chunks, col_feedback = st.columns(3)
+        with col_time:
+            time_diff = rag_time - llm_time
+            time_better = "RAG" if time_diff < 0 else "LLM"
+            st.metric("Faster Response", f"{time_better} ({abs(time_diff):.0f}ms diff)")
+        
+        with col_chunks:
+            st.metric("Context Sources", f"{len(comp['rag_response'].get('retrieved', []))} chunks")
+        
+        with col_feedback:
+            # Feedback buttons for comparison
+            col_up, col_down = st.columns(2)
+            with col_up:
+                if st.button("👍 RAG Better", key="rag_better"):
+                    st.session_state.feedback_message = "Feedback recorded: RAG response preferred"
+                    st.rerun()
+            with col_down:
+                if st.button("👎 LLM Better", key="llm_better"):
+                    st.session_state.feedback_message = "Feedback recorded: LLM response preferred"
+                    st.rerun()
+        
+        # Clear comparison button
+        if st.button("🗑️ Clear Comparison", use_container_width=True):
+            del st.session_state.comparison_result
+            st.rerun()
 
 def show_query_history():
     """Query History page"""
