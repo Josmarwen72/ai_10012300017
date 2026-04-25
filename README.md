@@ -4,6 +4,9 @@
 
 # Acity RAG Assistant
 
+# 
+
+
 Manual RAG implementation (no LangChain, no LlamaIndex, no hosted RAG frameworks).  
 Stack: **Python** (chunking, cleaning, Sentence-Transformers embeddings, FAISS, BM25 hybrid retrieval, OpenAI chat), **FastAPI**, and a **simple Flask UI** for coursework delivery.
 
