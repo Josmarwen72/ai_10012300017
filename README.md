@@ -124,7 +124,7 @@ The Flask UI **Manual experiment logs** panel appends JSON lines to `data/manual
 
 ## 🌐 Live Deployment
 
-**Streamlit Cloud Deployment:** https://ai10012300017-y9zgdfyudhdf8nmu7dxpis.streamlit.app
+**Streamlit Cloud Deployment:** https://ai10012300017-dx4i3ibxcentcenuyhaic3.streamlit.app/
 
 ### ⚠️ Deployment Challenges & Solutions
 
