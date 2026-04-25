@@ -1,7 +1,7 @@
 # AI Exam
 # ai_10012300017
 # Name : Jose M. Kombila
-# Index Number : 10012300017
+
 
 # Acity RAG Assistant
 
