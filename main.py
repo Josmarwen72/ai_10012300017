@@ -36,6 +36,12 @@ st.markdown("""
   --cyan: #38bdf8;
 }
 
+/* Force dark theme on Streamlit */
+.stApp {
+  background: var(--bg);
+  color: var(--text);
+}
+
 body {
   margin: 0;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
@@ -44,6 +50,56 @@ body {
               radial-gradient(900px 500px at 95% -15%, rgba(236, 72, 153, 0.26), transparent 65%),
               radial-gradient(1000px 700px at 50% 120%, rgba(56, 189, 248, 0.22), transparent 70%),
               var(--bg);
+}
+
+/* Override Streamlit default styles */
+[data-testid="stSidebar"] {
+  background: linear-gradient(150deg, rgba(41, 50, 102, 0.9), rgba(20, 24, 54, 0.86));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  margin: 10px;
+  box-shadow: 0 20px 80px rgba(7, 10, 30, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+[data-testid="stSidebar"] > div {
+  background: transparent;
+  padding: 20px;
+}
+
+[data-testid="stSidebarNavItems"] {
+  display: none;
+}
+
+.main .block-container {
+  background: transparent;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  max-width: none;
+}
+
+/* Force dark theme on all elements */
+div, p, h1, h2, h3, h4, h5, h6, span, label, input, textarea, select {
+  color: var(--text) !important;
+}
+
+.stSelectbox > div > div {
+  background: rgba(24, 29, 60, 0.78) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px;
+  color: var(--text) !important;
+}
+
+.stTextArea > div > div > textarea {
+  background: rgba(24, 29, 60, 0.78) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px;
+  color: var(--text) !important;
+}
+
+.stSelectbox option {
+  background: rgba(24, 29, 60, 0.78) !important;
+  color: var(--text) !important;
 }
 
 .main-header {
@@ -476,10 +532,8 @@ def main():
     df = load_data()
     index_ready = not df.empty
 
-    # Custom layout with sidebar and main content
-    col_sidebar, col_main = st.columns([1, 3])
-
-    with col_sidebar:
+    # Use Streamlit's native sidebar for proper functionality
+    with st.sidebar:
         # Sidebar - Exact Flask UI recreation
         st.markdown("""
         <div class="sidebar">
@@ -492,33 +546,13 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # Navigation
-        st.markdown("""
-        <nav class="sidebar-nav">
-            <ul class="nav-list">
-        """, unsafe_allow_html=True)
-
-        nav_items = [
-            ("📊", "Dashboard", "dashboard"),
-            ("📝", "Query History", "query-history"),
-            ("🔬", "Manual Experiment Logs", "manual-logs"),
-            ("🔧", "System Pipeline", "pipeline")
-        ]
-
-        for icon, text, page in nav_items:
-            st.markdown(f"""
-            <li class="nav-item">
-                <a href="#{page}" class="nav-link active">
-                    <span class="nav-icon">{icon}</span>
-                    <span class="nav-text">{text}</span>
-                </a>
-            </li>
-            """, unsafe_allow_html=True)
-
-        st.markdown("""
-            </ul>
-        </nav>
-        """, unsafe_allow_html=True)
+        # Navigation with working page selection
+        page = st.selectbox(
+            "Navigate to:",
+            ["Dashboard", "Query History", "Manual Experiment Logs", "System Pipeline"],
+            index=0,
+            key="page_selector"
+        )
 
         # Recent Queries
         st.markdown('<h3 class="section-title">Recent Queries</h3>', unsafe_allow_html=True)
@@ -537,7 +571,7 @@ def main():
         else:
             st.markdown('<p class="muted">No recent queries</p>', unsafe_allow_html=True)
 
-    with col_main:
+    # Main content area
         # Main Header - Exact Flask UI recreation
         st.markdown("""
         <header class="main-header">
