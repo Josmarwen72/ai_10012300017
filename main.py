@@ -209,7 +209,8 @@ def load_data():
         # Try to load the CSV file
         data_path = ROOT / "data" / "Ghana_Election_Result.csv"
         if data_path.exists():
-            df = pd.read_csv(data_path)
+            # Skip the first 3 header lines
+            df = pd.read_csv(data_path, skiprows=3)
             return df
         else:
             # Create sample data if file doesn't exist
@@ -280,9 +281,9 @@ def main():
     st.markdown("""
     <div class="main-header">
         <div class="logo-text">
-            <p class="eyebrow">CS4241 - Introduction to Artificial Intelligence</p>
+            <p class="eyebrow">Academic City University</p>
             <h1>Acity RAG</h1>
-            <p class="muted">Academic City University</p>
+            <p class="muted">Retrieval Augmented Generation Assistant</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
