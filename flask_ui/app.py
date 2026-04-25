@@ -14,15 +14,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from backend.config import MANUAL_LOGS_PATH, ensure_dirs
-
-# Try to import ML dependencies, use fallback if not available
-try:
-    from backend.feedback_store import append_feedback
-    from backend.pipeline import load_store_and_bm25, run_pipeline
-    ML_AVAILABLE = True
-except ImportError as e:
-    print(f"ML dependencies not available: {e}")
-    ML_AVAILABLE = False
+from backend.feedback_store import append_feedback
+from backend.pipeline import load_store_and_bm25, run_pipeline
 
 # Fix the DATA_DIR to point to the correct data directory
 DATA_DIR = _FLASK_DIR.parent / "data"
@@ -197,9 +190,7 @@ def home() -> str:
         prompt_profile = (request.form.get("prompt_profile") or "strict").strip()
         use_feedback = request.form.get("use_feedback") == "on"
 
-        if not ML_AVAILABLE:
-            error = "ML dependencies not available. Deploy with full ML stack for RAG functionality."
-        elif not index_ready:
+        if not index_ready:
             error = "Index not built. Run: python scripts/build_index.py"
         elif not query:
             error = "Please type a query."
@@ -287,14 +278,10 @@ def feedback() -> Any:
     source_id = (request.form.get("source_id") or "").strip()
     label = (request.form.get("label") or "").strip()
     if source_id and label in {"up", "down"}:
-        if ML_AVAILABLE:
-            append_feedback(source_id, label)
-            # Store success message in session for display
-            from flask import session
-            session['feedback_message'] = f"Feedback recorded: {label} for {source_id}"
-        else:
-            from flask import session
-            session['feedback_message'] = "ML dependencies not available - feedback not recorded"
+        append_feedback(source_id, label)
+        # Store success message in session for display
+        from flask import session
+        session['feedback_message'] = f"Feedback recorded: {label} for {source_id}"
     return redirect(url_for("home"))
 
 
