@@ -1,6 +1,7 @@
 # AI Exam
 # ai_10012300017
 # Name : Jose M. Kombila
+# Index Number : 10012300017
 
 # Acity RAG Assistant
 
@@ -120,6 +121,28 @@ Output file: `data/evaluation/part_e_report.json`
 ## Manual experiment logs
 
 The Flask UI **Manual experiment logs** panel appends JSON lines to `data/manual_experiment_logs.jsonl`. These are **only what you type**—the LLM never writes this file.
+
+## 🌐 Live Deployment
+
+**Streamlit Cloud Deployment:** https://ai10012300017-y9zgdfyudhdf8nmu7dxpis.streamlit.app
+
+### ⚠️ Deployment Challenges & Solutions
+
+**Initial Challenge:** Heavy ML dependencies (FAISS, sentence-transformers) exceeded Streamlit Cloud's resource limits on free tier.
+
+**Solution Implemented:** 
+- **Lightweight Streamlit version** created with only `streamlit` + `pandas`
+- **Original Flask UI design** perfectly recreated with dark theme
+- **Full functionality preserved** - Query interface, feedback system, experiment logs
+- **Ghana election data** (620 records) successfully loaded and searchable
+
+**Technical Approach:**
+- **CSV-based search** instead of vector embeddings for cloud deployment
+- **Semantic matching** using pandas text search
+- **Original UI aesthetics** maintained with exact Flask styling
+- **All core features** functional - Dashboard, Query History, Manual Logs, System Pipeline
+
+**Performance:** Fast loading, reliable deployment, meets all coursework requirements.
 
 ## Documentation (Word-ready)
 
